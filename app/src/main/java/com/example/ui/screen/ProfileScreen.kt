@@ -53,134 +53,35 @@ fun ProfileScreen(
     var apiKeyInput by remember(customGeminiApiKey) { mutableStateOf(customGeminiApiKey) }
     var showApiKey by remember { mutableStateOf(false) }
 
-    // Tab state to separate Login and Register
+    // Dialog state for separate Login/Register popup
+    var showAuthDialog by remember { mutableStateOf(false) }
     var isLoginTab by remember { mutableStateOf(true) }
 
     // State for collapsible lyrics guide
     var showLyricsGuide by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp)
-    ) {
-        Spacer(modifier = Modifier.height(56.dp))
-
-        // --- Profile Card Heading ---
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 24.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.secondary
-                            )
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = if (currentUser != null) currentUser!!.email?.take(2)?.uppercase() ?: "GV" else "GV",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
-
-            Spacer(modifier = Modifier.width(18.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = if (currentUser != null) currentUser!!.email ?: "Pengguna GeekzVibe" else "Apresiator Musik",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (isPremium) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.wrapContentSize()
-                ) {
-                    Text(
-                        text = if (isPremium) "Premium Member [Aktif]" else "Free Member",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = if (isPremium) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Bold
-                        ),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-
-            if (currentUser != null) {
-                IconButton(
-                    onClick = { viewModel.logout() },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Logout,
-                        contentDescription = "Keluar"
-                    )
-                }
-            }
+    // Dismiss dialog when successfully authenticated
+    LaunchedEffect(currentUser) {
+        if (currentUser != null) {
+            showAuthDialog = false
         }
+    }
 
-        // --- STATS GRID ROW ---
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            StatCard(
-                title = "Total Lagu",
-                value = songs.size.toString(),
-                icon = Icons.Default.MusicNote,
-                modifier = Modifier.weight(1f)
-            )
-            StatCard(
-                title = "Playlist",
-                value = playlists.size.toString(),
-                icon = Icons.Default.QueueMusic,
-                modifier = Modifier.weight(1f)
-            )
-            StatCard(
-                title = "Suka",
-                value = favorites.size.toString(),
-                icon = Icons.Default.Favorite,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        // --- AUTENTIKASI PENGGUNA (Hanya jika belum masuk) ---
-        if (currentUser == null) {
-            Text(
-                text = "Akun Pengguna",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+    // --- Authentication dialog ---
+    if (showAuthDialog) {
+        AlertDialog(
+            onDismissRequest = { showAuthDialog = false },
+            confirmButton = {},
+            dismissButton = {},
+            title = {
+                Text(
+                    text = if (isLoginTab) "Masuk ke GeekzVibe" else "Daftar Akun Baru",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     // Custom Sleek Tab Selector to separate Login & Register
                     Row(
                         modifier = Modifier
@@ -266,26 +167,168 @@ fun ProfileScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                    Button(
-                        onClick = {
-                            if (isLoginTab) {
-                                viewModel.loginWithEmail(emailInput, passwordInput)
-                            } else {
-                                viewModel.registerWithEmail(emailInput, passwordInput)
-                            }
-                        },
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            text = if (isLoginTab) "Masuk ke Akun" else "Daftar Akun Baru",
-                            fontWeight = FontWeight.Bold
-                        )
+                        OutlinedButton(
+                            onClick = { showAuthDialog = false },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Batal")
+                        }
+
+                        Button(
+                            onClick = {
+                                if (isLoginTab) {
+                                    viewModel.loginWithEmail(emailInput, passwordInput)
+                                } else {
+                                    viewModel.registerWithEmail(emailInput, passwordInput)
+                                }
+                            },
+                            modifier = Modifier.weight(1.3f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = if (isLoginTab) "Masuk" else "Daftar",
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
+            },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(scrollState)
+            .padding(horizontal = 20.dp)
+    ) {
+        Spacer(modifier = Modifier.height(56.dp))
+
+        // --- Profile Card Heading ---
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 24.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.secondary
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (currentUser != null) currentUser!!.email?.take(2)?.uppercase() ?: "GV" else "GV",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
+
+            Spacer(modifier = Modifier.width(18.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (currentUser != null) currentUser!!.email ?: "Pengguna GeekzVibe" else "Apresiator Musik",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (isPremium) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.wrapContentSize()
+                ) {
+                    Text(
+                        text = if (isPremium) "Premium Member [Aktif]" else "Free Member",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = if (isPremium) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            if (currentUser != null) {
+                IconButton(
+                    onClick = { viewModel.logout() },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Logout,
+                        contentDescription = "Keluar"
+                    )
+                }
+            } else {
+                Button(
+                    onClick = { showAuthDialog = true },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    ),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Login,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Masuk",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        // --- STATS GRID ROW ---
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            StatCard(
+                title = "Total Lagu",
+                value = songs.size.toString(),
+                icon = Icons.Default.MusicNote,
+                modifier = Modifier.weight(1f)
+            )
+            StatCard(
+                title = "Playlist",
+                value = playlists.size.toString(),
+                icon = Icons.Default.QueueMusic,
+                modifier = Modifier.weight(1f)
+            )
+            StatCard(
+                title = "Suka",
+                value = favorites.size.toString(),
+                icon = Icons.Default.Favorite,
+                modifier = Modifier.weight(1f)
+            )
         }
 
         // --- KEANGGOTAAN PREMIUM ---
@@ -450,13 +493,7 @@ fun ProfileScreen(
                     icon = Icons.Default.Timer,
                     color = if (isTimerActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
-                Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
-                PreferenceItem(
-                    title = "Cache Lirik & Terjemahan",
-                    status = "AKTIF (Room)",
-                    icon = Icons.Default.Storage,
-                    color = MaterialTheme.colorScheme.primary
-                )
+
             }
         }
 
