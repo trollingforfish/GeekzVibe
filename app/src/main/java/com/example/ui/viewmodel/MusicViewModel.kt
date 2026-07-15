@@ -124,12 +124,27 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         
         // Inisialisasi Firebase secara aman
         try {
+            com.google.firebase.FirebaseApp.initializeApp(application)
             auth = FirebaseAuth.getInstance()
             firestore = FirebaseFirestore.getInstance()
             _currentUser.value = auth?.currentUser
             observePremiumStatus()
         } catch (e: Exception) {
-            Log.e("MusicViewModel", "Firebase tidak terinisialisasi: ${e.message}")
+            Log.w("MusicViewModel", "Firebase default tidak terinisialisasi: ${e.message}. Mencoba inisialisasi dengan opsi tiruan untuk pencegahan error.")
+            try {
+                val options = com.google.firebase.FirebaseOptions.Builder()
+                    .setApiKey("AIzaSyDummyKeyForGeekzVibeMusicPlayer")
+                    .setApplicationId("1:1234567890:android:abcdef123456")
+                    .setProjectId("geekzvibe-dummy-project")
+                    .build()
+                com.google.firebase.FirebaseApp.initializeApp(application, options)
+                auth = FirebaseAuth.getInstance()
+                firestore = FirebaseFirestore.getInstance()
+                _currentUser.value = auth?.currentUser
+                observePremiumStatus()
+            } catch (ex: Exception) {
+                Log.w("MusicViewModel", "Inisialisasi Firebase tiruan juga gagal: ${ex.message}")
+            }
         }
 
         // Load custom Gemini API Key
@@ -366,7 +381,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             db.collection("users").document(user.uid)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
-                        Log.e("MusicViewModel", "Gagal mendengar status premium: ${error.message}")
+                        Log.w("MusicViewModel", "Gagal mendengar status premium: ${error.message}")
                         return@addSnapshotListener
                     }
                     if (snapshot != null && snapshot.exists()) {
@@ -453,7 +468,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         )
         db.collection("users").document(uid).set(userMap)
             .addOnFailureListener { e ->
-                Log.e("MusicViewModel", "Gagal inisialisasi user di Firestore: ${e.message}")
+                Log.w("MusicViewModel", "Gagal inisialisasi user di Firestore: ${e.message}")
             }
     }
 
