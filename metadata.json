@@ -1,0 +1,6 @@
+{
+  "name": "GeekzVibe",
+  "description": "Aplikasi pemutar musik modern dengan pencarian lirik 3 sumber dan penerjemah ke Bahasa Indonesia, dibalut tema Immersive UI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
