@@ -48,7 +48,7 @@ jobs:
             --dart-define=GOOGLE_TRANSLATE_API_KEY=${{ secrets.GOOGLE_TRANSLATE_API_KEY }}
 
       - name: Upload Android Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: android-release
           path: |
@@ -87,7 +87,7 @@ jobs:
             --dart-define=GOOGLE_TRANSLATE_API_KEY=${{ secrets.GOOGLE_TRANSLATE_API_KEY }}
 
       - name: Upload iOS Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ios-release
           path: build/ios/iphoneos/Runner.app
@@ -116,7 +116,7 @@ jobs:
             --dart-define=GOOGLE_TRANSLATE_API_KEY=${{ secrets.GOOGLE_TRANSLATE_API_KEY }}
 
       - name: Upload Web Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: web-release
           path: build/web
@@ -128,7 +128,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Download Android Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: android-release
           path: release-artifacts
